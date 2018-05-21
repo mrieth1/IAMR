@@ -133,6 +133,6 @@ diffuse.use_mlmg_solver = 1
 # Maximum number of iterations 
 cg.maxiter 				= 1000000
 mg.maxiter 				= 1000000  
-cg.unstable_criterion 	= 1000000 # NOTE: Not officially implemented in AMReX 
+cg.unstable_criterion 	= 1000000 
 
 #*******************************************************************************

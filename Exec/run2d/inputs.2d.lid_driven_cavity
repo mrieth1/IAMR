@@ -2,61 +2,125 @@
 # INPUTS.2D.LID_DRIVEN_CAVITY
 #*******************************************************************************
 
-# Maximum number of coarse grid timesteps to be taken, if stop_time is
-#  not reached first.
-max_step 				= 100000
+# Name of the file which specifies problem-specific parameters (defaults to "probin")
+amr.probin_file 		= probin.2d.lid_driven_cavity  
 
+#*******************************************************************************
+# WHEN SHOULD THE SIMULATION STOP?
+#*******************************************************************************
+# Maximum number of timesteps to be taken, if stop_time is not reached first.
+max_step 				= 100000
 # Time at which calculation stops, if max_step is not reached first.
 stop_time 				= 30
-
 # Stop simulation when we reach steady-state
 ns.stop_when_steady 	= 1
 ns.steady_tol 			= 1.0e-5
 
 #*******************************************************************************
+# CFL 
+#*******************************************************************************
+
+ns.cfl  		     	= 0.9  # CFL number used to set dt
+ns.init_shrink       	= 0.1  # factor which multiplies the very first time step
+ns.change_max 	      	= 1.1  # maximum change for dt (NOTE: does not seem to be implemented)
+ns.init_iter 	      	= 3    # number of initial iterations
+
+#*******************************************************************************
+# FLUID PROPERTIES 
+#*******************************************************************************
+
+# Viscosity coefficient 
+ns.vel_visc_coef     	= 0.001
+
+# Use variable viscosity? If so, dyn_visc_coef replaces viscosity coefficient 
+ns.variable_vel_visc 	= 1
+ns.dyn_visc_coef 		= 0.001
+ns.yield_stress 	 	= 0.0014142135623730951 	# Yield stress for viscoplastics
+ns.flow_index 		 	= 1.0     	                # Flow index for power-law dependency
+ns.reg_param 		 	= 0.0025 	                # Regularisation parameter
+
+# Forcing term defaults to  rho * abs(gravity) "down"
+ns.gravity           	= 0.0
+# Diffusion coefficient for first scalar
+ns.scal_diff_coefs   	= 0.0
+
+#*******************************************************************************
+# GRID AND GEOMETRY
+#*******************************************************************************
 
 # Number of cells in each coordinate direction at the coarsest level
 amr.n_cell 				= 64 64
 amr.max_grid_size		= 64
-amr.grid_eff 			= 0.9
+
+# Set to 0 if x-y coordinate system, set to 1 if r-z.
+geometry.coord_sys   	=  0
+# Physical dimensions of the low end of the domain.
+geometry.prob_lo     	=  0.0 0.0
+# Physical dimensions of the high end of the domain.
+geometry.prob_hi     	=  1.0 1.0
+#Set to 1 if periodic in that direction
+geometry.is_periodic 	=  0 0
 
 #*******************************************************************************
+# BOUNDARY CONDITIONS
+#*******************************************************************************
 
-ns.do_stress_ref 		= 1
+# 0 = Interior/Periodic  3 = Symmetry
+# 1 = Inflow             4 = SlipWall
+# 2 = Outflow            5 = NoSlipWall
+
+# Boundary conditions on the low end of the domain.
+ns.lo_bc 	         	= 5 5
+# Boundary conditions on the high end of the domain.
+ns.hi_bc   	         	= 5 5
+
+#*******************************************************************************
+# AMR
+#*******************************************************************************
+
 # Maximum level (defaults to 0 for single level calculation)
-amr.max_level			= 2
+amr.max_level		 	= 2 
+# Refinement criterion
+ns.do_tracer_ref 		= 0
+ns.do_stress_ref 		= 1
 # Interval (in number of level l timesteps) between regridding
-amr.regrid_int			= 1
+amr.regrid_int			= 1 
+# Refinement ratio as a function of level
+amr.ref_ratio		 	= 2 2 2 2
+# Factor by which grids must be coarsenable.
+amr.blocking_factor  	= 4
+# Grid effiency
+amr.grid_eff 		   	= 0.9
 
 #*******************************************************************************
-
-# Verbosity of different modules
-ns.v                    = 0
-amr.v                   = 1
-
+# PLOTTING AND CHECKPOINTS
 #*******************************************************************************
+
+# Choose which quantities to write to plot file
+amr.plot_vars    		= ALL
+amr.derive_plot_vars 	= mag_vort mag_strainrate eff_visc stress avg_pressure gradpx gradpy
+
+# Interval (in number of coarse timesteps) between plot files
+amr.plot_file 			= plt
+#amr.plot_int			= 10
+amr.plot_per			= 0.1 
 
 # Interval (in number of coarse timesteps) between checkpoint(restart) files
 amr.check_file 			= chk
 amr.check_int			= 1000
+# Continue from checkpoint 
+# amr.restart 			= chk01000
 
 #*******************************************************************************
-
-# Interval (in number of coarse timesteps) between plot files
-amr.plot_file			= plt
-#amr.plot_int			= 10
-amr.plot_per			= 0.1
-
+# VERBOSITY
 #*******************************************************************************
 
-# CFL number to be used in calculating the time step : 
-ns.cfl                  = 0.9  # CFL number used to set dt
-
-#*******************************************************************************
-
-# Factor by which the first time is shrunk relative to CFL constraint
-ns.init_shrink          = 0.1  # factor which multiplies the very first time step
-ns.change_max 			= 1.1
+amr.v 	            	= 1 	# AMR (top-level)
+ns.v  	            	= 0 	# NavierStokes
+diffuse.v 	        	= 0 	# Diffusion
+proj.v 	            	= 0 	# Projection
+cg.v  	            	= 0 	# ConjugateGradient
+mg.v  	            	= 0 	# MultiGrid
 
 #*******************************************************************************
 # LINEAR SOLVER SETTINGS
@@ -70,71 +134,6 @@ diffuse.use_mlmg_solver = 1
 # Maximum number of iterations 
 cg.maxiter 				= 1000000
 mg.maxiter 				= 1000000  
-cg.unstable_criterion 	= 1000000 # NOTE: Not officially implemented in AMReX 
-
-#*******************************************************************************
-
-# Viscosity coefficient 
-ns.variable_vel_visc 	= 1
-ns.vel_visc_coef        = 0.001
-ns.dyn_visc_coef        = 0.001 
-ns.yield_stress      	= 0.0014142135623730951
-ns.flow_index      		= 1.0
-ns.reg_param         	= 0.0025
-
-#*******************************************************************************
-
-# Diffusion coefficient for tracer
-ns.scal_diff_coefs      = 0.0
-
-#*******************************************************************************
-
-# Forcing term defaults to  rho * abs(gravity) "down"
-ns.gravity              = 0.0  
-
-#*******************************************************************************
-
-# Name of the file which specifies problem-specific parameters (defaults to "probin")
-amr.probin_file 		= probin.2d.lid_driven_cavity  
-
-#*******************************************************************************
-
-# Set to 0 if x-y coordinate system, set to 1 if r-z.
-geometry.coord_sys   	=  0
-
-#*******************************************************************************
-
-# Physical dimensions of the low end of the domain.
-geometry.prob_lo     	=  0. 0. 
-
-# Physical dimensions of the high end of the domain.
-geometry.prob_hi     	=  1. 1. 
-
-#*******************************************************************************
-
-#Set to 1 if periodic in that direction
-geometry.is_periodic 	=  0 0
-
-#*******************************************************************************
-
-# Boundary conditions on the low end of the domain.
-ns.lo_bc             	= 5 5  
-
-# Boundary conditions on the high end of the domain.
-ns.hi_bc             	= 5 5  
-
-# 0 = Interior/Periodic  3 = Symmetry
-# 1 = Inflow             4 = SlipWall
-# 2 = Outflow            5 = NoSlipWall
-
-#*******************************************************************************
-
-# Continue from checkpoint 
-# amr.restart 			= /local/data/public/ksk38/chk02135
-
-#*******************************************************************************
-
-# Add vorticity to the variables in the plot files.
-amr.derive_plot_vars    = 	mag_vort mag_strainrate eff_visc stress
+cg.unstable_criterion 	= 1000000
 
 #*******************************************************************************
