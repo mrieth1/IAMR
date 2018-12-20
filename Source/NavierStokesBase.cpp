@@ -3236,7 +3236,7 @@ NavierStokesBase::SyncInterp (MultiFab&      CrseSync,
 #pragma omp parallel
 #endif
     {
-      std::unique_ptr<FArrayBox> fdata;
+      std::unique_ptr<FArrayBox> fdata(new FArrayBox());
       Vector<BCRec> bc_interp(num_comp);
       int* bc_new = new int[2*BL_SPACEDIM*(src_comp+num_comp)];
 
