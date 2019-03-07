@@ -25,6 +25,7 @@
 #include <AMReX_MCMultiGrid.H>
 #include <AMReX_MCCGSolver.H>
 
+
 //
 // Useful enumeration of the different forms of the diffusion terms
 //
@@ -54,8 +55,8 @@ public:
 
     amrex::FluxRegister* viscFluxReg ();
 
-    amrex::Real get_scaled_abs_tol (const amrex::MultiFab& rhs,
-                             amrex::Real            reduction) const;
+    static amrex::Real get_scaled_abs_tol (const amrex::MultiFab& rhs,
+                             amrex::Real            reduction);
 
     void diffuse_scalar (amrex::Real                   dt,
 			 int                    sigma,
@@ -75,6 +76,40 @@ public:
 			 const SolveMode&       solve_mode = ONEPASS,
                          bool                   add_old_time_divFlux = true);
     
+    static void diffuse_scalar_msd (const amrex::Vector<amrex::MultiFab*>& S_old,
+                             const amrex::Vector<amrex::MultiFab*>& Rho_old,
+                             amrex::Vector<amrex::MultiFab*>&       S_new,
+                             const amrex::Vector<amrex::MultiFab*>& Rho_new,
+                             int                                    S_comp,
+                             int                                    num_comp,
+                             int                                    Rho_comp,
+                             amrex::Real                            prev_time,
+                             amrex::Real                            curr_time,
+                             amrex::Real                            be_cn_theta,
+                             const amrex::MultiFab&                 rho_half,
+                             int                                    rho_flag,
+                             amrex::MultiFab* const*                fluxn,
+                             amrex::MultiFab* const*                fluxnp1,
+                             int                                    fluxComp,
+                             amrex::MultiFab*                       delta_rhs, 
+                             int                                    rhsComp,
+                             const amrex::MultiFab*                 alpha, 
+                             int                                    alphaComp,
+                             const amrex::MultiFab* const*          betan, 
+                             const amrex::MultiFab* const*          betanp1,
+                             int                                    betaComp,
+                             const amrex::Vector<amrex::Real>&      visc_coef,
+                             int                                    visc_coef_comp,
+                             const amrex::MultiFab&                 volume,
+                             const amrex::MultiFab* const*          area,
+                             const amrex::IntVect&                  cratio,
+                             const amrex::BCRec&                    bc,
+                             const amrex::Geometry&                 geom,
+                             bool                                   add_hoop_stress,
+                             const SolveMode&                       solve_mode = ONEPASS,
+                             bool                                   add_old_time_divFlux = true,
+                             const amrex::Vector<int>&              is_diffusive = amrex::Vector<int>());
+
     void diffuse_velocity (amrex::Real                   dt,
                            amrex::Real                   be_cn_theta,
                            const amrex::MultiFab&        rho_half,
@@ -161,6 +196,29 @@ public:
 			      int                    alphaComp,
                               bool		     bndry_already_filled = false);
 
+    static amrex::ABecLaplacian* getViscOp_msd (amrex::Real            a,
+                                                amrex::Real            b,
+                                                ViscBndry&             visc_bndry,
+                                                const amrex::Vector<amrex::MultiFab*>& S,
+                                                int                    S_comp,
+                                                const amrex::Vector<amrex::MultiFab*>& Rho,
+                                                int                    Rho_comp,
+                                                const amrex::MultiFab& rho_half,
+                                                int                    rho_flag, 
+                                                amrex::Real*           rhsscale,
+                                                const amrex::MultiFab* const* beta,
+                                                int                    betaComp,
+                                                const amrex::MultiFab* alpha_in,
+                                                int                    alpha_in_comp,
+                                                amrex::MultiFab&       alpha,
+                                                std::array<amrex::MultiFab,AMREX_SPACEDIM>& bcoeffs,
+                                                const amrex::BCRec&    bc,
+                                                const amrex::IntVect&  crat,
+                                                const amrex::Geometry& geom,
+                                                const amrex::MultiFab& volume,
+                                                const amrex::MultiFab* const* area,
+                                                bool                   use_hoop_stress);
+
     amrex::ABecLaplacian* getViscOp (int                    src_comp,
                               amrex::Real                   a,
                               amrex::Real                   b,
@@ -183,9 +241,31 @@ public:
                    int                    dataComp,
                    const amrex::MultiFab* alpha_in);
 
+    static void setAlpha_msd (amrex::ABecLaplacian*  visc_op,
+                       amrex::Real            a,
+                       amrex::Real            b, 
+                       const amrex::MultiFab& rho_half,
+                       int                    rho_flag,
+                       amrex::Real*           rhsscale,
+                       const amrex::MultiFab* alpha_in,
+                       int                    alpha_in_comp,
+                       const amrex::MultiFab* rho,
+                       int                    rho_comp,
+                       amrex::MultiFab&       alpha,
+                       const amrex::Geometry& geom,
+                       const amrex::MultiFab& volume,
+                       bool                   use_hoop_stress);
+
     void setBeta (amrex::ABecLaplacian*         visc_op,
                   const amrex::MultiFab* const* beta,
-                  int                    betaComp);
+                  int                           betaComp);
+
+    static void setBeta_msd (amrex::ABecLaplacian*         visc_op,
+                      const amrex::MultiFab* const* beta,
+                      int                           betaComp,
+                      std::array<amrex::MultiFab,AMREX_SPACEDIM>& bcoeffs,
+                      const amrex::Geometry&        geom,
+                      const amrex::MultiFab* const* area);
 
     amrex::DivVis* getTensorOp (amrex::Real                   a,
                          amrex::Real                   b, 
@@ -228,6 +308,15 @@ public:
                              int                state_ind,
                              int                src_comp,
                              int                num_comp);
+    
+    static void getBndryDataGivenS_msd (ViscBndry& bndry,
+                                 const amrex::Vector<amrex::MultiFab*>& S,
+                                 int        S_comp,
+                                 const amrex::Vector<amrex::MultiFab*>& Rho,
+                                 int        Rho_comp,
+                                 const amrex::BCRec& bc,
+                                 const amrex::IntVect& crat,
+                                 int        rho_flag);
 
     void FillBoundary (amrex::BndryRegister&     bdry,
                        int                src_comp,
@@ -241,9 +330,9 @@ public:
                      int&                   allthere,
                      int&                   allnull) const;
 
-    void checkBeta (const amrex::MultiFab* const* beta,
+    static void checkBeta (const amrex::MultiFab* const* beta,
                     int&                   allthere,
-                    int&                   allnull) const;
+                    int&                   allnull);
 
     void checkBeta (const amrex::MultiFab* const* beta,
                     int&                   allthere) const;
@@ -270,6 +359,31 @@ public:
                          const DiffusionForm         testForm,
                          const int                   sComp,
                          const int                   nComp);
+
+    static void setDomainBC_msd (std::array<amrex::LinOpBCType,AMREX_SPACEDIM>& mlmg_lobc,
+                          std::array<amrex::LinOpBCType,AMREX_SPACEDIM>& mlmg_hibc,
+                          const amrex::BCRec& bc);
+
+    static void computeAlpha_msd (amrex::MultiFab&       alpha,
+                                  std::pair<amrex::Real,amrex::Real>& scalars,
+                                  amrex::Real            a,
+                                  amrex::Real            b,
+                                  const amrex::MultiFab& rho_half,
+                                  int                    rho_flag, 
+                                  amrex::Real*           rhsscale,
+                                  const amrex::MultiFab* alpha_in,
+                                  int                    alpha_in_comp,
+                                  const amrex::MultiFab* rho,
+                                  int                    rho_comp,
+                                  const amrex::Geometry& geom,
+                                  const amrex::MultiFab& volume,
+                                  bool                   use_hoop_stress);
+    
+    static void computeBeta_msd (std::array<amrex::MultiFab,AMREX_SPACEDIM>& bcoeffs,
+                          const amrex::MultiFab* const* beta,
+                          int                    betaComp,
+                          const amrex::Geometry& geom,
+                          const amrex::MultiFab* const* area);
 
 protected:
 

@@ -1257,12 +1257,10 @@ NavierStokesBase::estTimeStep ()
 #endif
 {
     Real gr_max[BL_SPACEDIM];
+    FArrayBox tforces;
 
     for (MFIter Rho_mfi(rho_ctime,true); Rho_mfi.isValid(); ++Rho_mfi)
     {
-    
-        FArrayBox tforces;
-      
 	const Box& bx=Rho_mfi.tilebox();
         //
         // Get the velocity forcing.  For some reason no viscous forcing.
@@ -1320,6 +1318,7 @@ NavierStokesBase::estTimeStep ()
 #if (BL_SPACEDIM == 3)
 	u_max[2] = umax_z;
 #endif 
+
 	ParallelDescriptor::ReduceRealMax(u_max, BL_SPACEDIM, IOProc);
 
 	amrex::Print() << "estTimeStep :: \n" << "LEV = " << level << " UMAX = ";
