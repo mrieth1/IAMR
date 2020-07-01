@@ -3740,7 +3740,11 @@ NavierStokesBase::velocity_advection (Real dt)
 //
 
 void
-NavierStokesBase::velocity_update (Real dt)
+NavierStokesBase::velocity_update (Real dt,
+#ifdef AMREX_PARTICLES
+				   MultiFab& spray_force
+#endif				   
+				   )
 {
     BL_PROFILE("NavierStokesBase::velocity_update()");
 
@@ -3756,7 +3760,11 @@ NavierStokesBase::velocity_update (Real dt)
       }
     }
 
-    velocity_advection_update(dt);
+    velocity_advection_update(dt,
+#ifdef AMREX_PARTICLES
+			      spray_force
+#endif
+			      );
 
     if (!initial_iter)
         velocity_diffusion_update(dt);
@@ -3776,7 +3784,12 @@ NavierStokesBase::velocity_update (Real dt)
 }
 
 void
-NavierStokesBase::velocity_advection_update (Real dt)
+NavierStokesBase::velocity_advection_update (Real dt,
+#ifdef AMREX_PARTICLES
+					     MultiFab& spray_force
+#endif					     
+					     )
+
 {
     BL_PROFILE("NavierStokesBase::velocity_advection_update()");
 
@@ -3846,6 +3859,11 @@ NavierStokesBase::velocity_advection_update (Real dt)
         const Real half_time = 0.5*(state[State_Type].prevTime()+state[State_Type].curTime());
         getForce(tforces,bx,0,Xvel,BL_SPACEDIM,half_time,Vel,Scal,0);
 
+#ifdef AMREX_PARTICLES
+	amrex::Print() << "Gonna apply the spray forces\n"; 
+	tforces.copy(spray_force[Rhohalf_mfi],0,0,BL_SPACEDIM);
+#endif
+	
         //
         // Do following only at initial iteration--per JBB.
         //

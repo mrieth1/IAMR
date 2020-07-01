@@ -354,9 +354,17 @@ protected:
     //
     // Update velocities (or momentum) after advection.
     //
-    void velocity_update (amrex::Real dt);
+    void velocity_update (amrex::Real dt,
+#ifdef AMREX_PARTICLES
+			  amrex::MultiFab& spray_force
+#endif
+			  );
 
-    void velocity_advection_update (amrex::Real dt);
+    void velocity_advection_update (amrex::Real dt,
+#ifdef AMREX_PARTICLES
+			  amrex::MultiFab& spray_force
+#endif
+			  );
     
     void calc_mut_LES(amrex::MultiFab*  diffusivity[BL_SPACEDIM], amrex::Real time);
     
