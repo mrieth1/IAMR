@@ -3740,9 +3740,9 @@ NavierStokesBase::velocity_advection (Real dt)
 //
 
 void
-NavierStokesBase::velocity_update (Real dt,
+NavierStokesBase::velocity_update (Real dt
 #ifdef AMREX_PARTICLES
-				   MultiFab& spray_force
+				  ,MultiFab& spray_force
 #endif				   
 				   )
 {
@@ -3760,9 +3760,9 @@ NavierStokesBase::velocity_update (Real dt,
       }
     }
 
-    velocity_advection_update(dt,
+    velocity_advection_update(dt
 #ifdef AMREX_PARTICLES
-			      spray_force
+			      ,spray_force
 #endif
 			      );
 
@@ -3784,9 +3784,9 @@ NavierStokesBase::velocity_update (Real dt,
 }
 
 void
-NavierStokesBase::velocity_advection_update (Real dt,
+NavierStokesBase::velocity_advection_update (Real dt
 #ifdef AMREX_PARTICLES
-					     MultiFab& spray_force
+					     ,MultiFab& spray_force
 #endif					     
 					     )
 
