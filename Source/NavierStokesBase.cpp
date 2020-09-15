@@ -2618,7 +2618,7 @@ NavierStokesBase::post_restart ()
     make_rho_curr_time();
 
 #ifdef AMREX_PARTICLES
-    post_restart_particle ();
+    //post_restart_particle ();
 #endif
 }
 
