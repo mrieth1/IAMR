@@ -3860,7 +3860,6 @@ NavierStokesBase::velocity_advection_update (Real dt
         getForce(tforces,bx,0,Xvel,BL_SPACEDIM,half_time,Vel,Scal,0);
 
 #ifdef AMREX_PARTICLES
-	amrex::Print() << "Gonna apply the spray forces\n"; 
 	tforces.copy(spray_force[Rhohalf_mfi],0,0,BL_SPACEDIM);
 #endif
 	
